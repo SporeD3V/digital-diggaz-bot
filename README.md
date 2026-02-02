@@ -10,18 +10,25 @@ Automated monthly Spotify playlist generator for the Digital Diggaz Facebook gro
 - **Deduplication**: Prevents duplicate tracks in playlists
 - **Private Playlists**: Creates private playlists for manual review before sharing
 - **Manual Trigger**: Can be triggered anytime via API endpoint
+- **Web Config UI**: Browser-based form at `/` to configure all credentials
+- **MongoDB Storage**: Securely store configuration in MongoDB Atlas
 
 ## Project Structure
 
 ```
 digital-diggaz-bot/
 ├── api/
-│   └── generate-playlist.js   # Main API route (Vercel serverless function)
+│   ├── generate-playlist.js   # Main API route (Vercel serverless function)
+│   ├── save-config.js         # Save configuration to MongoDB
+│   └── admin.js               # View stored configurations
 ├── lib/
 │   ├── date-utils.js          # Date calculations and month boundaries
 │   ├── facebook.js            # Facebook Graph API client
+│   ├── mongodb.js             # MongoDB Atlas client
 │   ├── music-detector.js      # URL extraction and music detection
 │   └── spotify.js             # Spotify Web API client
+├── pages/
+│   └── index.html             # Configuration form UI
 ├── .env.example               # Environment variable template
 ├── package.json               # Dependencies and scripts
 ├── vercel.json                # Vercel configuration with cron
@@ -33,6 +40,7 @@ digital-diggaz-bot/
 1. **Facebook Developer App** with access to the target group
 2. **Spotify Developer App** with OAuth configured
 3. **Vercel Account** (free Hobby tier works)
+4. **MongoDB Atlas Account** (free tier works)
 
 ## Environment Variables
 
@@ -44,6 +52,8 @@ digital-diggaz-bot/
 | `SPOTIFY_CLIENT_SECRET` | Spotify app client secret |
 | `SPOTIFY_USER_ID` | Your Spotify username |
 | `SPOTIFY_REFRESH_TOKEN` | OAuth refresh token with `playlist-modify-private` scope |
+| `MONGODB_URI` | MongoDB Atlas connection string (auto-set via Vercel integration) |
+| `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
 
 ## Setup Guide
 
@@ -96,7 +106,30 @@ curl -X POST https://accounts.spotify.com/api/token \
 # Step 4: Save the refresh_token from the response
 ```
 
-### 4. Set Environment Variables
+### 4. Configure MongoDB Atlas
+
+**Option A: Vercel Integration (Recommended)**
+
+1. Go to your Vercel project dashboard
+2. Click **Storage** tab → **Connect Database**
+3. Select **MongoDB Atlas** from marketplace
+4. Follow prompts to create/connect Atlas cluster
+5. `MONGODB_URI` is automatically added to your env vars
+
+**Option B: Manual Setup**
+
+1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a free M0 cluster
+3. Create a database user with read/write access
+4. Whitelist `0.0.0.0/0` for Vercel serverless (or use Vercel's IP list)
+5. Get connection string: Click **Connect** → **Connect your application**
+6. Add to Vercel:
+```bash
+vercel env add MONGODB_URI
+# Paste: mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
+```
+
+### 5. Set Environment Variables
 
 For local development:
 ```bash
@@ -112,9 +145,10 @@ vercel env add SPOTIFY_CLIENT_ID
 vercel env add SPOTIFY_CLIENT_SECRET
 vercel env add SPOTIFY_USER_ID
 vercel env add SPOTIFY_REFRESH_TOKEN
+vercel env add ADMIN_SECRET  # Optional: for /api/admin access
 ```
 
-### 5. Deploy to Vercel
+### 6. Deploy to Vercel
 
 ```bash
 npm i -g vercel
@@ -123,6 +157,29 @@ vercel --prod
 ```
 
 ## Usage
+
+### Web Configuration UI
+
+Visit your deployed URL root (`/`) to access the configuration form:
+
+1. Open `https://your-project.vercel.app/`
+2. Fill in all 6 credentials (Facebook + Spotify)
+3. Click **Save Configuration**
+4. Credentials are stored securely in MongoDB Atlas
+
+### Admin API
+
+```bash
+# List all configs (metadata only)
+curl https://your-project.vercel.app/api/admin
+
+# View specific config (masked tokens)
+curl https://your-project.vercel.app/api/admin?projectId=default
+
+# View full secrets (requires ADMIN_SECRET)
+curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
+  "https://your-project.vercel.app/api/admin?projectId=default&showSecrets=true"
+```
 
 ### Automatic (Cron)
 

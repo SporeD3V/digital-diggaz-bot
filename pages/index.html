@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Diggaz Bot - Configuration</title>
+  <style>
+    /**
+     * Modern, clean styling for the config form.
+     * Uses CSS variables for easy theming.
+     */
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #1a1a1a;
+      --bg-input: #2a2a2a;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --accent: #1db954;
+      --accent-hover: #1ed760;
+      --error: #e74c3c;
+      --border: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    /* Form card styling */
+    .card {
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    label small {
+      color: var(--text-secondary);
+      font-weight: normal;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    input::placeholder {
+      color: #666;
+    }
+
+    /* Button styling */
+    .btn {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 1rem;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Status messages */
+    .status {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .status.success {
+      display: block;
+      background: rgba(29, 185, 84, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+    }
+
+    .status.error {
+      display: block;
+      background: rgba(231, 76, 60, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+
+    /* Info box */
+    .info-box {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .info-box a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .info-box a:hover {
+      text-decoration: underline;
+    }
+
+    /* Divider between sections */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎵 Digital Diggaz Bot</h1>
+      <p class="subtitle">Configure your Spotify playlist automation</p>
+    </header>
+
+    <div class="card">
+      <form id="configForm">
+        <!-- Facebook Configuration Section -->
+        <h2 class="section-title">Facebook Configuration</h2>
+        
+        <div class="form-group">
+          <label for="groupId">
+            Group ID
+            <small>— from facebook.com/groups/YOUR_ID</small>
+          </label>
+          <input 
+            type="text" 
+            id="groupId" 
+            name="GROUP_ID" 
+            placeholder="e.g., 2880828481939428"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="fbToken">
+            Access Token
+            <small>— long-lived user token</small>
+          </label>
+          <input 
+            type="password" 
+            id="fbToken" 
+            name="FB_TOKEN" 
+            placeholder="EAABc..."
+            required
+          >
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Spotify Configuration Section -->
+        <h2 class="section-title">Spotify Configuration</h2>
+
+        <div class="form-group">
+          <label for="spotifyClientId">
+            Client ID
+            <small>— from Spotify Developer Dashboard</small>
+          </label>
+          <input 
+            type="text" 
+            id="spotifyClientId" 
+            name="SPOTIFY_CLIENT_ID" 
+            placeholder="Your Spotify app client ID"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="spotifyClientSecret">
+            Client Secret
+            <small>— keep this private!</small>
+          </label>
+          <input 
+            type="password" 
+            id="spotifyClientSecret" 
+            name="SPOTIFY_CLIENT_SECRET" 
+            placeholder="Your Spotify app client secret"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="spotifyUserId">
+            User ID
+            <small>— your Spotify username</small>
+          </label>
+          <input 
+            type="text" 
+            id="spotifyUserId" 
+            name="SPOTIFY_USER_ID" 
+            placeholder="Your Spotify username"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="spotifyRefreshToken">
+            Refresh Token
+            <small>— OAuth token with playlist-modify-private scope</small>
+          </label>
+          <input 
+            type="password" 
+            id="spotifyRefreshToken" 
+            name="SPOTIFY_REFRESH_TOKEN" 
+            placeholder="Generated via OAuth flow"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn" id="submitBtn">
+          Save Configuration
+        </button>
+
+        <!-- Status message container -->
+        <div id="status" class="status"></div>
+      </form>
+
+      <div class="info-box">
+        <strong>Need help?</strong><br>
+        • <a href="https://developers.facebook.com/tools/explorer/" target="_blank">Generate Facebook Token</a><br>
+        • <a href="https://developer.spotify.com/dashboard" target="_blank">Create Spotify App</a><br>
+        • Check the <a href="https://github.com/SporeD3V/digital-diggaz-bot#readme" target="_blank">README</a> for full setup guide.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Form submission handler.
+     * Collects all input values and POSTs to /api/save-config.
+     */
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const btn = document.getElementById('submitBtn');
+      const status = document.getElementById('status');
+      
+      // Disable button during submission
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      status.className = 'status';
+      status.style.display = 'none';
+
+      /**
+       * Collect form data into an object.
+       * FormData API makes this clean and handles all input types.
+       */
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      try {
+        const response = await fetch('/api/save-config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          status.className = 'status success';
+          status.textContent = '✓ Configuration saved successfully!';
+        } else {
+          throw new Error(result.error || 'Failed to save configuration');
+        }
+      } catch (error) {
+        status.className = 'status error';
+        status.textContent = '✗ ' + error.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Configuration';
+      }
+    });
+  </script>
+</body>
+</html>

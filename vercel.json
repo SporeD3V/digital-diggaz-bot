@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/", "destination": "/pages/index.html" }
+  ],
   "crons": [
     {
       "path": "/api/generate-playlist",
