@@ -94,13 +94,16 @@ async function processCandidate(candidate, targetYearMonth, spotifyToken) {
 }
 
 /**
- * Main playlist generation handler.
+ * Main playlist generation handler (Vercel Serverless Function).
  * Orchestrates the full flow: fetch posts → extract music → search → create playlist.
  * 
- * @param {Request} request - Incoming HTTP request
- * @returns {Promise<Response>} JSON response with stats and playlist URL
+ * WHY (req, res) signature: Vercel Functions use Node.js style handlers.
+ * This is different from Edge Functions which use Web API (Request/Response).
+ * 
+ * @param {Object} req - Vercel request object (extends Node.js IncomingMessage)
+ * @param {Object} res - Vercel response object (extends Node.js ServerResponse)
  */
-export default async function handler(request) {
+module.exports = async function handler(req, res) {
   const startTime = Date.now();
   
   /**
@@ -149,7 +152,7 @@ export default async function handler(request) {
     
     if (posts.length === 0) {
       console.log('[Warning] No posts found in date range');
-      return Response.json({
+      return res.status(200).json({
         success: true,
         message: 'No posts found in the target month',
         stats,
@@ -171,7 +174,7 @@ export default async function handler(request) {
     
     if (allCandidates.length === 0) {
       console.log('[Warning] No music found in posts');
-      return Response.json({
+      return res.status(200).json({
         success: true,
         message: 'No music links found in posts',
         stats,
@@ -205,7 +208,7 @@ export default async function handler(request) {
     
     if (matchedTracks.size === 0) {
       console.log('[Warning] No tracks matched release date filter');
-      return Response.json({
+      return res.status(200).json({
         success: true,
         message: `No tracks from ${monthInfo.monthName} ${monthInfo.year} found`,
         stats,
@@ -251,7 +254,8 @@ export default async function handler(request) {
     console.log(`Tracks skipped (dupes): ${stats.tracksSkipped}`);
     console.log(`Duration: ${duration}ms`);
     
-    return Response.json({
+    /** Return success response with playlist details */
+    return res.status(200).json({
       success: true,
       message: `Created playlist for ${monthInfo.monthName} ${monthInfo.year}`,
       playlist: {
@@ -270,19 +274,11 @@ export default async function handler(request) {
      */
     console.error('\n[Fatal Error]', error);
     
-    return Response.json({
+    return res.status(500).json({
       success: false,
       error: error.message,
       stats,
       duration: Date.now() - startTime
-    }, { status: 500 });
+    });
   }
-}
-
-/**
- * Vercel Edge runtime config.
- * Using Node.js runtime for better compatibility with APIs.
- */
-export const config = {
-  maxDuration: 300
 };
