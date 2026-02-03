@@ -10,29 +10,49 @@ Automated monthly Spotify playlist generator for the Digital Diggaz Facebook gro
 - **Deduplication**: Prevents duplicate tracks in playlists
 - **Private Playlists**: Creates private playlists for manual review before sharing
 - **Manual Trigger**: Can be triggered anytime via API endpoint
-- **Web Config UI**: Browser-based form at `/` to configure all credentials
+- **Admin Panel**: React + TypeScript admin UI at `/admin` with password authentication
+- **API Connection Testing**: Test Facebook and Spotify credentials before saving
+- **Remember Me**: Optional persistent login for admin panel
 - **MongoDB Storage**: Securely store configuration in MongoDB Atlas
 
 ## Project Structure
 
 ```
 digital-diggaz-bot/
+├── admin/                        # React + TypeScript admin panel
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Login.tsx         # Login form with Remember Me
+│   │   │   ├── ConfigForm.tsx    # API configuration form
+│   │   │   └── styles.css        # Component styles
+│   │   ├── App.tsx               # Main app with auth logic
+│   │   ├── types.ts              # TypeScript interfaces
+│   │   └── main.tsx              # React entry point
+│   ├── package.json              # Admin dependencies (React, Vite)
+│   └── vite.config.ts            # Vite build config
 ├── api/
-│   ├── generate-playlist.js   # Main API route (Vercel serverless function)
-│   ├── save-config.js         # Save configuration to MongoDB
-│   └── admin.js               # View stored configurations
+│   ├── auth/
+│   │   ├── login.js              # Password authentication
+│   │   └── verify.js             # Token verification
+│   ├── test/
+│   │   ├── facebook.js           # Test Facebook API connection
+│   │   └── spotify.js            # Test Spotify API connection
+│   ├── generate-playlist.js      # Main playlist generation
+│   ├── save-config.js            # Save configuration to MongoDB
+│   └── admin.js                  # View stored configurations
 ├── lib/
-│   ├── date-utils.js          # Date calculations and month boundaries
-│   ├── facebook.js            # Facebook Graph API client
-│   ├── mongodb.js             # MongoDB Atlas client
-│   ├── music-detector.js      # URL extraction and music detection
-│   └── spotify.js             # Spotify Web API client
-├── pages/
-│   └── index.html             # Configuration form UI
-├── .env.example               # Environment variable template
-├── package.json               # Dependencies and scripts
-├── vercel.json                # Vercel configuration with cron
-└── README.md                  # This file
+│   ├── date-utils.js             # Date calculations
+│   ├── facebook.js               # Facebook Graph API client
+│   ├── mongodb.js                # MongoDB Atlas client
+│   ├── music-detector.js         # URL extraction and detection
+│   └── spotify.js                # Spotify Web API client
+├── public/
+│   ├── index.html                # Landing page
+│   └── admin/                    # Built admin panel (generated)
+├── .env.example                  # Environment variable template
+├── package.json                  # Root dependencies and scripts
+├── vercel.json                   # Vercel configuration
+└── README.md                     # This file
 ```
 
 ## Prerequisites
@@ -53,6 +73,7 @@ digital-diggaz-bot/
 | `SPOTIFY_USER_ID` | Your Spotify username |
 | `SPOTIFY_REFRESH_TOKEN` | OAuth refresh token with `playlist-modify-private` scope |
 | `MONGODB_URI` | MongoDB Atlas connection string (auto-set via Vercel integration) |
+| `ADMIN_PASSWORD` | Password for admin panel login at `/admin` |
 | `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
 
 ## Setup Guide
@@ -145,6 +166,7 @@ vercel env add SPOTIFY_CLIENT_ID
 vercel env add SPOTIFY_CLIENT_SECRET
 vercel env add SPOTIFY_USER_ID
 vercel env add SPOTIFY_REFRESH_TOKEN
+vercel env add ADMIN_PASSWORD  # Required: for /admin panel login
 vercel env add ADMIN_SECRET  # Optional: for /api/admin access
 ```
 
@@ -156,16 +178,20 @@ vercel login
 vercel --prod
 ```
 
+The build process automatically compiles the React admin panel to `public/admin/`.
+
 ## Usage
 
-### Web Configuration UI
+### Admin Panel
 
-Visit your deployed URL root (`/`) to access the configuration form:
+The admin panel is a React + TypeScript application with password authentication:
 
-1. Open `https://your-project.vercel.app/`
-2. Fill in all 6 credentials (Facebook + Spotify)
-3. Click **Save Configuration**
-4. Credentials are stored securely in MongoDB Atlas
+1. Open `https://your-project.vercel.app/admin`
+2. Enter your `ADMIN_PASSWORD` to login
+3. (Optional) Check "Remember me" to stay logged in
+4. Fill in Facebook and Spotify credentials
+5. Click **Test** buttons to verify API connections
+6. Click **Save Configuration** to store in MongoDB
 
 ### Admin API
 
