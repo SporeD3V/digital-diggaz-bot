@@ -96,6 +96,18 @@ export default function Home() {
           {/* Main content when loaded */}
           {stats && (
             <>
+              {/* Demo mode banner */}
+              {stats.isMockData && (
+                <div className="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4 mb-6 text-center">
+                  <p className="text-yellow-400 font-medium">
+                    🎵 Demo Mode — Showing sample data
+                  </p>
+                  <p className="text-yellow-400/70 text-sm mt-1">
+                    Spotify API credentials not configured. Connect to see real playlist stats.
+                  </p>
+                </div>
+              )}
+
               {/* Hero section with cover and follow CTA */}
               <Hero main={stats.main} />
 
