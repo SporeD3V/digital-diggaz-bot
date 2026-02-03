@@ -3,14 +3,21 @@
  * Public stats page for Digital Diggaz playlists
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import Hero from '../components/Hero';
 import StatsGrid from '../components/StatsGrid';
 import TopArtists from '../components/TopArtists';
 import NewTracks from '../components/NewTracks';
 import VotingSection from '../components/VotingSection';
 import OtherPlaylists from '../components/OtherPlaylists';
+
+// Dynamic import for SpotifyEmbed (client-side only - uses browser APIs)
+const SpotifyEmbed = dynamic(() => import('../components/SpotifyEmbed'), {
+  ssr: false,
+  loading: () => <div className="h-[400px] bg-zinc-800 rounded-xl animate-pulse" />,
+});
 
 /**
  * Home page - displays all playlist stats
@@ -21,6 +28,15 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
+
+  // State for data extracted from Spotify embed
+  const [extractedData, setExtractedData] = useState([]);
+
+  // Callback when track data is extracted from embed
+  const handleTrackData = useCallback((track, allTracks) => {
+    setExtractedData(allTracks);
+    console.log('[Extracted]', track);
+  }, []);
 
   // Fetch stats on mount
   useEffect(() => {
@@ -96,18 +112,12 @@ export default function Home() {
           {/* Main content when loaded */}
           {stats && (
             <>
-              {/* Spotify Embed Player */}
-              {stats.main?.embedUrl && (
+              {/* Spotify Embed with IFrame API - extracts data as you play */}
+              {stats.main?.id && (
                 <div className="mb-6">
-                  <iframe
-                    src={stats.main.embedUrl}
-                    width="100%"
-                    height="352"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy"
-                    className="rounded-xl"
-                    title="Spotify Playlist"
+                  <SpotifyEmbed 
+                    playlistId={stats.main.id}
+                    onTrackData={handleTrackData}
                   />
                 </div>
               )}
