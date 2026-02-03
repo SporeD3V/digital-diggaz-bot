@@ -96,14 +96,30 @@ export default function Home() {
           {/* Main content when loaded */}
           {stats && (
             <>
-              {/* Demo mode banner */}
-              {stats.isMockData && (
-                <div className="bg-yellow-600/20 border border-yellow-600 rounded-lg p-4 mb-6 text-center">
-                  <p className="text-yellow-400 font-medium">
-                    🎵 Demo Mode — Showing sample data
+              {/* Spotify Embed Player */}
+              {stats.main?.embedUrl && (
+                <div className="mb-6">
+                  <iframe
+                    src={stats.main.embedUrl}
+                    width="100%"
+                    height="352"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    className="rounded-xl"
+                    title="Spotify Playlist"
+                  />
+                </div>
+              )}
+
+              {/* Data source notice */}
+              {stats.isHardcodedData && (
+                <div className="bg-blue-600/20 border border-blue-600 rounded-lg p-4 mb-6 text-center">
+                  <p className="text-blue-400 font-medium">
+                    📊 Stats from manual data
                   </p>
-                  <p className="text-yellow-400/70 text-sm mt-1">
-                    Spotify API credentials not configured. Connect to see real playlist stats.
+                  <p className="text-blue-400/70 text-sm mt-1">
+                    Track data is manually maintained. Use the embed above for live playlist.
                   </p>
                 </div>
               )}

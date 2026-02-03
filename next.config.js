@@ -8,7 +8,7 @@ const nextConfig = {
   // Enable React strict mode for better development warnings
   reactStrictMode: true,
 
-  // Allow Spotify CDN images
+  // Allow Spotify CDN images (including oEmbed thumbnails)
   images: {
     remotePatterns: [
       {
@@ -19,6 +19,16 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'mosaic.scdn.co',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image-cdn-ak.spotifycdn.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image-cdn-fa.spotifycdn.com',
         pathname: '/**',
       },
     ],

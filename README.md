@@ -2,16 +2,25 @@
 
 Public stats page for the Digital Diggaz community Spotify playlists. Shows total tracks, listening time, top artists, new additions, and voting for Track of the Month.
 
+**No Spotify API keys required** — uses public embeds + hardcoded data.
+
 ## Features
 
-- **Public Stats Page**: Beautiful Tailwind UI showing playlist statistics
-- **Total vs Current**: Compare all-time unique tracks vs current month
+- **Spotify Embed Player**: Full interactive playlist embed (no auth needed)
+- **Stats Grid**: Total vs current playlist statistics
 - **Top Artists**: Ranked list of artists by track count
-- **New Tracks**: Recently added tracks not in historical playlists
+- **New Tracks**: Recently added tracks
 - **Track of Month Voting**: Community voting with Vercel KV storage
 - **Historical Playlists**: Links to all past monthly playlists
 - **Follow CTA**: Prominent button to follow the main playlist
-- **Auto-refresh**: Refresh button to fetch latest data
+
+## How It Works
+
+Since Spotify API keys are unavailable (new integrations on hold), this app uses:
+
+1. **Spotify oEmbed API** (public) — fetches playlist cover image and title
+2. **Spotify Iframe Embed** — interactive player, no auth required
+3. **Hardcoded Track Data** — manually maintained in `lib/playlistData.js`
 
 ## Project Structure
 
@@ -25,37 +34,22 @@ digital-diggaz-playlist-tracker/
 │   ├── VotingSection.js     # Track of Month voting
 │   └── OtherPlaylists.js    # Historical playlists list
 ├── lib/
-│   └── spotify.js           # Spotify API client
+│   ├── playlistData.js      # Hardcoded track data (edit to update stats)
+│   └── spotifyEmbed.js      # oEmbed API utilities
 ├── pages/
 │   ├── _app.js              # Next.js app wrapper
-│   ├── index.js             # Main stats page
+│   ├── index.js             # Main stats page with embed
 │   └── api/
-│       ├── stats.js         # GET /api/stats - fetch all data
-│       └── vote.js          # GET/POST /api/vote - voting
+│       ├── stats.js         # GET /api/stats
+│       └── vote.js          # GET/POST /api/vote
 ├── styles/
 │   └── globals.css          # Tailwind + custom styles
 ├── utils/
-│   ├── calculations.js      # Stats computation
 │   └── formatters.js        # Display formatting
-├── .env.example             # Environment template
 ├── next.config.js           # Next.js config
 ├── package.json             # Dependencies
-├── postcss.config.js        # PostCSS for Tailwind
-├── tailwind.config.js       # Tailwind config
 └── vercel.json              # Vercel framework config
 ```
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SPOTIFY_CLIENT_ID` | Yes | Spotify app client ID |
-| `SPOTIFY_CLIENT_SECRET` | Yes | Spotify app client secret |
-| `SPOTIFY_REFRESH_TOKEN` | Yes | OAuth refresh token (scope: `playlist-read-private`) |
-| `MAIN_PLAYLIST_ID` | Yes | Main playlist ID (the one that gains followers) |
-| `PLAYLIST_IDS` | Yes | Comma-separated: main + all historical IDs |
-| `KV_*` | No | Auto-set when Vercel KV is added (for voting) |
-| `ANTHROPIC_API_KEY` | No | For future AI features |
 
 ## Setup
 
@@ -67,67 +61,64 @@ cd digital-diggaz-playlist-tracker
 npm install
 ```
 
-### 2. Configure Spotify
+### 2. Update Playlist Data
 
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create app, note Client ID and Secret
-3. Generate refresh token with `playlist-read-private` scope
+Edit `lib/playlistData.js` to add your tracks:
 
-### 3. Set Environment Variables
-
-```bash
-cp .env.example .env.local
-# Edit with your values
+```javascript
+const mainPlaylistTracks = [
+  {
+    id: 'spotify_track_id',
+    name: 'Track Name',
+    artists: ['Artist 1', 'Artist 2'],
+    duration_ms: 210000, // 3:30
+    added_at: '2026-02-01T12:00:00Z',
+  },
+  // ... more tracks
+];
 ```
 
-Or in Vercel:
-```bash
-vercel env add SPOTIFY_CLIENT_ID
-vercel env add SPOTIFY_CLIENT_SECRET
-vercel env add SPOTIFY_REFRESH_TOKEN
-vercel env add MAIN_PLAYLIST_ID
-vercel env add PLAYLIST_IDS
-```
-
-### 4. Deploy
+### 3. Deploy
 
 ```bash
 vercel --prod
 ```
 
-## Playlist Management Workflow
+No environment variables required for basic functionality!
 
-1. **Main Playlist** (fixed ID): This is the permanent playlist URL you share. Followers stay here forever.
+## Updating Stats
 
-2. **Monthly Rotation**:
-   - Each month, manually move old tracks to a new "historical" playlist
-   - Add the historical playlist ID to `PLAYLIST_IDS`
-   - Add fresh tracks to the main playlist
+1. Open the playlist in Spotify
+2. Edit `lib/playlistData.js` with new track info
+3. Commit and push — Vercel auto-deploys
 
-3. **Example PLAYLIST_IDS**:
-   ```
-   PLAYLIST_IDS=abc123main,xyz789jan2026,def456feb2026
-   ```
+## Optional: Voting Feature
+
+Add Vercel KV storage for the voting feature:
+
+1. Go to Vercel Dashboard → Storage → Add KV
+2. `KV_*` environment variables are automatically set
+3. Redeploy
 
 ## API Endpoints
 
 ### GET /api/stats
 
-Returns computed playlist statistics:
+Returns playlist statistics from hardcoded data + oEmbed cover:
 
 ```json
 {
+  "isHardcodedData": true,
   "main": {
     "name": "Digital Diggaz",
     "coverImage": "https://...",
-    "followers": 1234,
+    "embedUrl": "https://open.spotify.com/embed/playlist/...",
     "url": "https://open.spotify.com/playlist/..."
   },
-  "total": { "tracks": 500, "durationMs": 123456789 },
-  "current": { "tracks": 25, "durationMs": 5678901 },
-  "topArtists": [{ "name": "Artist", "count": 10 }],
-  "newTracks": [{ "id": "...", "name": "Track", "artists": ["..."] }],
-  "otherPlaylists": [{ "name": "Jan 2026", "url": "...", "trackCount": 30 }]
+  "total": { "tracks": 20, "durationMs": 4500000 },
+  "current": { "tracks": 5, "durationMs": 1200000 },
+  "topArtists": [{ "name": "Artist", "count": 3 }],
+  "newTracks": [{ "id": "...", "name": "Track", "artists": ["..."] }]
 }
 ```
 
@@ -135,6 +126,11 @@ Returns computed playlist statistics:
 
 - **GET**: Returns current month's vote counts
 - **POST**: Submit vote `{ trackId, trackName, artists }`
+
+## Main Playlist
+
+**ID**: `7cpyeFEc4C2DXR1C1oQO58`
+**URL**: https://open.spotify.com/playlist/7cpyeFEc4C2DXR1C1oQO58
 
 ## License
 
