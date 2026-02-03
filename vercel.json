@@ -1,9 +1,9 @@
 {
   "buildCommand": "npm run build",
+  "outputDirectory": "public",
   "rewrites": [
-    { "source": "/", "destination": "/pages/index.html" },
-    { "source": "/admin", "destination": "/public/admin/index.html" },
-    { "source": "/admin/(.*)", "destination": "/public/admin/$1" }
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/(.*)", "destination": "/admin/$1" }
   ],
   "crons": [
     {
