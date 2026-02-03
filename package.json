@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
+    "build": "cd admin && npm install && npm run build",
     "deploy": "vercel --prod"
   },
   "dependencies": {
