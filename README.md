@@ -184,7 +184,9 @@ The build process automatically compiles the React admin panel to `public/admin/
 
 ### Admin Panel
 
-The admin panel is a React + TypeScript application with password authentication:
+The admin panel is a React + TypeScript application with password authentication.
+
+> **Note:** The root URL (`/`) automatically redirects to `/admin`.
 
 1. Open `https://your-project.vercel.app/admin`
 2. Enter your `ADMIN_PASSWORD` to login
