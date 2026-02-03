@@ -1,0 +1,65 @@
+/**
+ * @fileoverview Global styles with Tailwind directives
+ * Base styles and custom utilities
+ */
+
+/* Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom base styles */
+@layer base {
+  /* Dark theme body */
+  body {
+    @apply bg-spotify-black text-white min-h-screen;
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Custom component classes */
+@layer components {
+  /* Card styling */
+  .card {
+    @apply bg-zinc-900 rounded-xl p-6 shadow-lg;
+  }
+
+  /* Stat box styling */
+  .stat-box {
+    @apply bg-zinc-800 rounded-lg p-4 text-center;
+  }
+
+  /* Green accent button */
+  .btn-spotify {
+    @apply bg-spotify-green hover:bg-green-400 text-black font-bold 
+           py-3 px-6 rounded-full transition-colors duration-200;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply bg-zinc-700 hover:bg-zinc-600 text-white font-medium 
+           py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  /* Track list item */
+  .track-item {
+    @apply flex items-center gap-3 p-3 rounded-lg hover:bg-zinc-800 
+           transition-colors duration-150;
+  }
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  @apply w-8 h-8 border-4 border-spotify-green border-t-transparent 
+         rounded-full animate-spin;
+}

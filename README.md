@@ -1,294 +1,140 @@
-# Digital Diggaz Bot
+# Digital Diggaz Playlist Tracker
 
-Automated monthly Spotify playlist generator for the Digital Diggaz community. Processes music links to find matching Spotify tracks released that month and creates a curated private playlist.
-
-> **Note:** Facebook Groups API was deprecated in Feb 2026. The bot now requires manual link submission instead of automatic group scanning.
+Public stats page for the Digital Diggaz community Spotify playlists. Shows total tracks, listening time, top artists, new additions, and voting for Track of the Month.
 
 ## Features
 
-- **Automatic Scheduling**: Runs on 1st of each month at 00:00 UTC via Vercel Cron
-- **Multi-Platform Detection**: Extracts music from YouTube, SoundCloud, Spotify, Bandcamp, Apple Music, Tidal, Deezer links
-- **Smart Filtering**: Only includes tracks released in the target month
-- **Deduplication**: Prevents duplicate tracks in playlists
-- **Private Playlists**: Creates private playlists for manual review before sharing
-- **Manual Trigger**: Can be triggered anytime via API endpoint
-- **Admin Dashboard**: React + TypeScript dashboard at `/admin` combining system status and configuration
-- **Manual Link Submission**: Paste music links via admin panel (replaces deprecated Facebook API)
-- **System Status**: Real-time indicators for MongoDB and Spotify connection status
-- **API Connection Testing**: Test Spotify credentials before saving
-- **Remember Me**: Optional persistent login for admin panel
-- **MongoDB Storage**: Securely store configuration in MongoDB Atlas
+- **Public Stats Page**: Beautiful Tailwind UI showing playlist statistics
+- **Total vs Current**: Compare all-time unique tracks vs current month
+- **Top Artists**: Ranked list of artists by track count
+- **New Tracks**: Recently added tracks not in historical playlists
+- **Track of Month Voting**: Community voting with Vercel KV storage
+- **Historical Playlists**: Links to all past monthly playlists
+- **Follow CTA**: Prominent button to follow the main playlist
+- **Auto-refresh**: Refresh button to fetch latest data
 
 ## Project Structure
 
 ```
-digital-diggaz-bot/
-├── admin/                        # React + TypeScript admin panel
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Login.tsx         # Login form with Remember Me
-│   │   │   ├── ConfigForm.tsx    # Dashboard with status + config forms
-│   │   │   └── styles.css        # Component styles
-│   │   ├── App.tsx               # Main app with auth logic
-│   │   ├── types.ts              # TypeScript interfaces
-│   │   └── main.tsx              # React entry point
-│   ├── package.json              # Admin dependencies (React, Vite)
-│   └── vite.config.ts            # Vite build config
-├── api/
-│   ├── auth/
-│   │   ├── login.js              # Password authentication
-│   │   └── verify.js             # Token verification
-│   ├── test/
-│   │   ├── facebook.js           # DEPRECATED - Returns deprecation notice
-│   │   └── spotify.js            # Test Spotify API connection
-│   ├── generate-playlist.js      # Main playlist generation
-│   ├── submit-links.js           # Submit music links for processing
-│   ├── get-links.js              # Retrieve submitted links
-│   ├── save-config.js            # Save configuration to MongoDB
-│   └── admin.js                  # View stored configurations
+digital-diggaz-playlist-tracker/
+├── components/
+│   ├── Hero.js              # Cover image + follow CTA
+│   ├── StatsGrid.js         # Total vs current stats
+│   ├── TopArtists.js        # Top 10 artists list
+│   ├── NewTracks.js         # New tracks this month
+│   ├── VotingSection.js     # Track of Month voting
+│   └── OtherPlaylists.js    # Historical playlists list
 ├── lib/
-│   ├── date-utils.js             # Date calculations
-│   ├── facebook.js               # DEPRECATED - Facebook Groups API no longer works
-│   ├── mongodb.js                # MongoDB Atlas client
-│   ├── music-detector.js         # URL extraction and detection
-│   └── spotify.js                # Spotify Web API client
-├── public/
-│   ├── index.html                # Landing page
-│   └── admin/                    # Built admin panel (generated)
-├── .env.example                  # Environment variable template
-├── package.json                  # Root dependencies and scripts
-├── vercel.json                   # Vercel configuration
-└── README.md                     # This file
+│   └── spotify.js           # Spotify API client
+├── pages/
+│   ├── _app.js              # Next.js app wrapper
+│   ├── index.js             # Main stats page
+│   └── api/
+│       ├── stats.js         # GET /api/stats - fetch all data
+│       └── vote.js          # GET/POST /api/vote - voting
+├── styles/
+│   └── globals.css          # Tailwind + custom styles
+├── utils/
+│   ├── calculations.js      # Stats computation
+│   └── formatters.js        # Display formatting
+├── .env.example             # Environment template
+├── next.config.js           # Next.js config
+├── package.json             # Dependencies
+├── postcss.config.js        # PostCSS for Tailwind
+├── tailwind.config.js       # Tailwind config
+└── vercel.json              # Vercel framework config
 ```
-
-## Prerequisites
-
-1. **Spotify Developer App** with OAuth configured
-2. **Vercel Account** (free Hobby tier works)
-3. **MongoDB Atlas Account** (free tier works)
 
 ## Environment Variables
 
-Only these environment variables are required in Vercel. Spotify credentials are stored in MongoDB via the admin panel.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SPOTIFY_CLIENT_ID` | Yes | Spotify app client ID |
+| `SPOTIFY_CLIENT_SECRET` | Yes | Spotify app client secret |
+| `SPOTIFY_REFRESH_TOKEN` | Yes | OAuth refresh token (scope: `playlist-read-private`) |
+| `MAIN_PLAYLIST_ID` | Yes | Main playlist ID (the one that gains followers) |
+| `PLAYLIST_IDS` | Yes | Comma-separated: main + all historical IDs |
+| `KV_*` | No | Auto-set when Vercel KV is added (for voting) |
+| `ANTHROPIC_API_KEY` | No | For future AI features |
 
-| Variable | Description |
-|----------|-------------|
-| `MONGODB_URI` | MongoDB Atlas connection string (auto-set via Vercel integration) |
-| `ADMIN_PASSWORD` | Password for admin panel login at `/admin` |
-| `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
-
-### Spotify Credentials (stored in MongoDB)
-
-These are configured via the admin panel at `/admin` and stored securely in MongoDB:
-
-| Credential | Description |
-|------------|-------------|
-| `SPOTIFY_CLIENT_ID` | Spotify app client ID |
-| `SPOTIFY_CLIENT_SECRET` | Spotify app client secret |
-| `SPOTIFY_USER_ID` | Your Spotify username |
-| `SPOTIFY_REFRESH_TOKEN` | OAuth refresh token with `playlist-modify-private` scope |
-
-## Setup Guide
+## Setup
 
 ### 1. Clone and Install
 
 ```bash
 git clone <your-repo-url>
-cd digital-diggaz-bot
+cd digital-diggaz-playlist-tracker
 npm install
 ```
 
 ### 2. Configure Spotify
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create a new app
-3. Add redirect URI: `http://localhost:3000/callback`
-4. Note your Client ID and Client Secret
-5. Get your User ID from [Spotify Account](https://www.spotify.com/account/overview/)
-6. Generate refresh token:
+2. Create app, note Client ID and Secret
+3. Generate refresh token with `playlist-read-private` scope
 
-```bash
-# Step 1: Open this URL in browser (replace YOUR_CLIENT_ID)
-https://accounts.spotify.com/authorize?client_id=YOUR_CLIENT_ID&response_type=code&redirect_uri=http://localhost:3000/callback&scope=playlist-modify-private%20playlist-modify-public
+### 3. Set Environment Variables
 
-# Step 2: After authorizing, you'll be redirected to:
-# http://localhost:3000/callback?code=AUTHORIZATION_CODE
-# Copy the code from the URL
-
-# Step 3: Exchange code for tokens
-curl -X POST https://accounts.spotify.com/api/token \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=authorization_code" \
-  -d "code=AUTHORIZATION_CODE" \
-  -d "redirect_uri=http://localhost:3000/callback" \
-  -d "client_id=YOUR_CLIENT_ID" \
-  -d "client_secret=YOUR_CLIENT_SECRET"
-
-# Step 4: Save the refresh_token from the response
-```
-
-### 3. Configure MongoDB Atlas
-
-**Option A: Vercel Integration (Recommended)**
-
-1. Go to your Vercel project dashboard
-2. Click **Storage** tab → **Connect Database**
-3. Select **MongoDB Atlas** from marketplace
-4. Follow prompts to create/connect Atlas cluster
-5. `MONGODB_URI` is automatically added to your env vars
-
-**Option B: Manual Setup**
-
-1. Go to [MongoDB Atlas](https://www.mongodb.com/atlas)
-2. Create a free M0 cluster
-3. Create a database user with read/write access
-4. Whitelist `0.0.0.0/0` for Vercel serverless (or use Vercel's IP list)
-5. Get connection string: Click **Connect** → **Connect your application**
-6. Add to Vercel:
-```bash
-vercel env add MONGODB_URI
-# Paste: mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
-```
-
-### 4. Set Environment Variables
-
-For local development:
 ```bash
 cp .env.example .env.local
-# Edit .env.local with MONGODB_URI and ADMIN_PASSWORD
+# Edit with your values
 ```
 
-For Vercel deployment:
+Or in Vercel:
 ```bash
-vercel env add MONGODB_URI       # From MongoDB Atlas (or use Vercel integration)
-vercel env add ADMIN_PASSWORD    # Required: for /admin panel login
-vercel env add ADMIN_SECRET      # Optional: for /api/admin access
+vercel env add SPOTIFY_CLIENT_ID
+vercel env add SPOTIFY_CLIENT_SECRET
+vercel env add SPOTIFY_REFRESH_TOKEN
+vercel env add MAIN_PLAYLIST_ID
+vercel env add PLAYLIST_IDS
 ```
 
-> **Note:** Spotify credentials are configured via the admin panel at `/admin` after deployment, not as environment variables.
-
-### 5. Deploy to Vercel
+### 4. Deploy
 
 ```bash
-npm i -g vercel
-vercel login
 vercel --prod
 ```
 
-The build process automatically compiles the React admin panel to `public/admin/`.
+## Playlist Management Workflow
 
-## Usage
+1. **Main Playlist** (fixed ID): This is the permanent playlist URL you share. Followers stay here forever.
 
-### Admin Dashboard
+2. **Monthly Rotation**:
+   - Each month, manually move old tracks to a new "historical" playlist
+   - Add the historical playlist ID to `PLAYLIST_IDS`
+   - Add fresh tracks to the main playlist
 
-The admin dashboard combines system status and API configuration in one screen.
+3. **Example PLAYLIST_IDS**:
+   ```
+   PLAYLIST_IDS=abc123main,xyz789jan2026,def456feb2026
+   ```
 
-> **Note:** The root URL (`/`) automatically redirects to `/admin`.
+## API Endpoints
 
-1. Open `https://your-project.vercel.app/admin`
-2. Enter your `ADMIN_PASSWORD` to login
-3. View **System Status** - green/red indicators for MongoDB and Spotify
-4. **Submit Music Links** - paste links from YouTube, SoundCloud, Spotify, etc. (one per line)
-5. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
+### GET /api/stats
 
-### Submitting Music Links
-
-Since the Facebook Groups API is deprecated, music links must be submitted manually:
-
-1. Go to the admin dashboard at `/admin`
-2. In the **Submit Music Links** section, paste music URLs
-3. Supports: YouTube, SoundCloud, Spotify, Bandcamp, Apple Music, Tidal, Deezer
-4. Links can be one per line, comma-separated, or space-separated
-5. Click **Submit Links** - duplicates are automatically skipped
-6. Links are stored by month and processed when the playlist is generated
-
-### Admin API
-
-```bash
-# List all configs (metadata only)
-curl https://your-project.vercel.app/api/admin
-
-# View specific config (masked tokens)
-curl https://your-project.vercel.app/api/admin?projectId=default
-
-# View full secrets (requires ADMIN_SECRET)
-curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
-  "https://your-project.vercel.app/api/admin?projectId=default&showSecrets=true"
-```
-
-### Status Page
-
-Check system health at `/status` - shows green/red indicators for each component:
-
-- **MongoDB**: Database connection status
-- **Spotify**: Configuration saved status
-- **Next Run**: When the cron job will execute
-
-API endpoint: `GET /api/status` returns JSON with `hasMongoConnection`, `hasSpotifyConfig`, `nextCronRunDescription`.
-
-### Automatic (Cron)
-
-The bot automatically runs on the 1st of each month at 00:00 UTC. Check Vercel dashboard logs for execution details.
-
-### Manual Trigger
-
-```bash
-# Local development
-npm run dev
-curl http://localhost:3000/api/generate-playlist
-
-# Production
-curl https://your-project.vercel.app/api/generate-playlist
-```
-
-### Response Format
+Returns computed playlist statistics:
 
 ```json
 {
-  "success": true,
-  "message": "Created playlist for January 2026",
-  "playlist": {
-    "name": "Digital Diggaz January 2026",
-    "url": "https://open.spotify.com/playlist/...",
-    "id": "playlist_id"
+  "main": {
+    "name": "Digital Diggaz",
+    "coverImage": "https://...",
+    "followers": 1234,
+    "url": "https://open.spotify.com/playlist/..."
   },
-  "stats": {
-    "postsScanned": 150,
-    "musicCandidates": 45,
-    "tracksMatched": 12,
-    "tracksAdded": 12,
-    "tracksSkipped": 0,
-    "errors": []
-  },
-  "duration": 15000
+  "total": { "tracks": 500, "durationMs": 123456789 },
+  "current": { "tracks": 25, "durationMs": 5678901 },
+  "topArtists": [{ "name": "Artist", "count": 10 }],
+  "newTracks": [{ "id": "...", "name": "Track", "artists": ["..."] }],
+  "otherPlaylists": [{ "name": "Jan 2026", "url": "...", "trackCount": 30 }]
 }
 ```
 
-## How It Works
+### GET/POST /api/vote
 
-1. **Date Calculation**: Determines previous month boundaries (e.g., on Feb 1st, scans Jan 1-31)
-2. **Fetch Posts**: Retrieves all Facebook group posts from the target month
-3. **Extract Music**: Parses post text and attachments for music URLs
-4. **Search Spotify**: Searches for matching tracks, filtering by release date
-5. **Create Playlist**: Creates a private playlist named "Digital Diggaz [Month] [Year]"
-6. **Add Tracks**: Adds unique tracks to the playlist (deduped)
-
-## Troubleshooting
-
-### Facebook Token Expired
-Facebook tokens expire after 60 days. Regenerate at Graph API Explorer and update `FB_TOKEN`.
-
-### Spotify Token Issues
-The refresh token should work indefinitely unless you revoke app access. If issues persist, regenerate via the OAuth flow.
-
-### No Posts Found
-- Verify `GROUP_ID` is correct
-- Ensure `FB_TOKEN` has group access
-- Check if you're a member of the group
-
-### No Tracks Matched
-- The filter only includes tracks released in the target month
-- Older tracks shared in posts are intentionally excluded
+- **GET**: Returns current month's vote counts
+- **POST**: Submit vote `{ trackId, trackName, artists }`
 
 ## License
 
