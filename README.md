@@ -1,6 +1,8 @@
 # Digital Diggaz Bot
 
-Automated monthly Spotify playlist generator for the Digital Diggaz Facebook group. Scans group posts for music links, finds matching Spotify tracks released that month, and creates a curated private playlist.
+Automated monthly Spotify playlist generator for the Digital Diggaz community. Processes music links to find matching Spotify tracks released that month and creates a curated private playlist.
+
+> **Note:** Facebook Groups API was deprecated in Feb 2026. The bot now requires manual link submission instead of automatic group scanning.
 
 ## Features
 
@@ -11,9 +13,8 @@ Automated monthly Spotify playlist generator for the Digital Diggaz Facebook gro
 - **Private Playlists**: Creates private playlists for manual review before sharing
 - **Manual Trigger**: Can be triggered anytime via API endpoint
 - **Admin Dashboard**: React + TypeScript dashboard at `/admin` combining system status and configuration
-- **System Status**: Real-time indicators for MongoDB, Facebook, and Spotify connection status
-- **Separate Config Saves**: Save Facebook and Spotify credentials independently
-- **API Connection Testing**: Test credentials before saving
+- **System Status**: Real-time indicators for MongoDB and Spotify connection status
+- **API Connection Testing**: Test Spotify credentials before saving
 - **Remember Me**: Optional persistent login for admin panel
 - **MongoDB Storage**: Securely store configuration in MongoDB Atlas
 
@@ -37,14 +38,14 @@ digital-diggaz-bot/
 │   │   ├── login.js              # Password authentication
 │   │   └── verify.js             # Token verification
 │   ├── test/
-│   │   ├── facebook.js           # Test Facebook API connection
+│   │   ├── facebook.js           # DEPRECATED - Returns deprecation notice
 │   │   └── spotify.js            # Test Spotify API connection
 │   ├── generate-playlist.js      # Main playlist generation
 │   ├── save-config.js            # Save configuration to MongoDB
 │   └── admin.js                  # View stored configurations
 ├── lib/
 │   ├── date-utils.js             # Date calculations
-│   ├── facebook.js               # Facebook Graph API client
+│   ├── facebook.js               # DEPRECATED - Facebook Groups API no longer works
 │   ├── mongodb.js                # MongoDB Atlas client
 │   ├── music-detector.js         # URL extraction and detection
 │   └── spotify.js                # Spotify Web API client
@@ -59,14 +60,13 @@ digital-diggaz-bot/
 
 ## Prerequisites
 
-1. **Facebook Developer App** with access to the target group
-2. **Spotify Developer App** with OAuth configured
-3. **Vercel Account** (free Hobby tier works)
-4. **MongoDB Atlas Account** (free tier works)
+1. **Spotify Developer App** with OAuth configured
+2. **Vercel Account** (free Hobby tier works)
+3. **MongoDB Atlas Account** (free tier works)
 
 ## Environment Variables
 
-Only these environment variables are required in Vercel. API credentials (Facebook, Spotify) are stored in MongoDB via the admin panel.
+Only these environment variables are required in Vercel. Spotify credentials are stored in MongoDB via the admin panel.
 
 | Variable | Description |
 |----------|-------------|
@@ -74,14 +74,12 @@ Only these environment variables are required in Vercel. API credentials (Facebo
 | `ADMIN_PASSWORD` | Password for admin panel login at `/admin` |
 | `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
 
-### API Credentials (stored in MongoDB)
+### Spotify Credentials (stored in MongoDB)
 
 These are configured via the admin panel at `/admin` and stored securely in MongoDB:
 
 | Credential | Description |
 |------------|-------------|
-| `GROUP_ID` | Facebook group ID (from group URL) |
-| `FB_TOKEN` | Long-lived Facebook User Access Token |
 | `SPOTIFY_CLIENT_ID` | Spotify app client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify app client secret |
 | `SPOTIFY_USER_ID` | Your Spotify username |
@@ -97,19 +95,7 @@ cd digital-diggaz-bot
 npm install
 ```
 
-### 2. Configure Facebook
-
-1. Go to [Facebook Developer Portal](https://developers.facebook.com/)
-2. Create an app or use existing one
-3. Add yourself as a test user if needed
-4. Get your Group ID from the group URL: `facebook.com/groups/GROUP_ID`
-5. Generate a User Access Token at [Graph API Explorer](https://developers.facebook.com/tools/explorer/)
-   - Select your app
-   - Add permission: `groups_access_member_info`
-   - Generate token
-6. Extend token to long-lived (60 days) at [Access Token Debugger](https://developers.facebook.com/tools/debug/accesstoken/)
-
-### 3. Configure Spotify
+### 2. Configure Spotify
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
@@ -138,7 +124,7 @@ curl -X POST https://accounts.spotify.com/api/token \
 # Step 4: Save the refresh_token from the response
 ```
 
-### 4. Configure MongoDB Atlas
+### 3. Configure MongoDB Atlas
 
 **Option A: Vercel Integration (Recommended)**
 
@@ -161,7 +147,7 @@ vercel env add MONGODB_URI
 # Paste: mongodb+srv://user:pass@cluster.xxxxx.mongodb.net/?retryWrites=true&w=majority
 ```
 
-### 5. Set Environment Variables
+### 4. Set Environment Variables
 
 For local development:
 ```bash
@@ -176,9 +162,9 @@ vercel env add ADMIN_PASSWORD    # Required: for /admin panel login
 vercel env add ADMIN_SECRET      # Optional: for /api/admin access
 ```
 
-> **Note:** Facebook and Spotify credentials are configured via the admin panel at `/admin` after deployment, not as environment variables.
+> **Note:** Spotify credentials are configured via the admin panel at `/admin` after deployment, not as environment variables.
 
-### 6. Deploy to Vercel
+### 5. Deploy to Vercel
 
 ```bash
 npm i -g vercel
@@ -198,11 +184,8 @@ The admin dashboard combines system status and API configuration in one screen.
 
 1. Open `https://your-project.vercel.app/admin`
 2. Enter your `ADMIN_PASSWORD` to login
-3. View **System Status** - green/red indicators for MongoDB, Facebook, Spotify
-4. Configure **Facebook** - enter Group ID and Token, click **Test**, then **Save Facebook Config**
-5. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
-
-Each section can be saved independently, allowing you to set up one service at a time.
+3. View **System Status** - green/red indicators for MongoDB and Spotify
+4. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
 
 ### Admin API
 
@@ -223,11 +206,10 @@ curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
 Check system health at `/status` - shows green/red indicators for each component:
 
 - **MongoDB**: Database connection status
-- **Facebook**: Configuration saved status  
 - **Spotify**: Configuration saved status
 - **Next Run**: When the cron job will execute
 
-API endpoint: `GET /api/status` returns JSON with `hasMongoConnection`, `hasFacebookConfig`, `hasSpotifyConfig`, `nextCronRunDescription`.
+API endpoint: `GET /api/status` returns JSON with `hasMongoConnection`, `hasSpotifyConfig`, `nextCronRunDescription`.
 
 ### Automatic (Cron)
 

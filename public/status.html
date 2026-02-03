@@ -247,15 +247,6 @@
           </div>
         </div>
 
-        <!-- Facebook Config Status -->
-        <div class="status-item">
-          <div class="indicator loading" id="facebookIndicator"></div>
-          <div class="status-content">
-            <div class="status-label">Facebook</div>
-            <div class="status-desc" id="facebookDesc">Checking configuration...</div>
-          </div>
-        </div>
-
         <!-- Spotify Config Status -->
         <div class="status-item">
           <div class="indicator loading" id="spotifyIndicator"></div>
@@ -296,11 +287,9 @@
     async function fetchStatus() {
       // Reset to loading state
       setIndicator('mongoIndicator', 'loading');
-      setIndicator('facebookIndicator', 'loading');
       setIndicator('spotifyIndicator', 'loading');
       
       document.getElementById('mongoDesc').textContent = 'Checking connection...';
-      document.getElementById('facebookDesc').textContent = 'Checking configuration...';
       document.getElementById('spotifyDesc').textContent = 'Checking configuration...';
       document.getElementById('errorMessage').style.display = 'none';
 
@@ -320,17 +309,6 @@
         } else {
           setIndicator('mongoIndicator', 'error');
           document.getElementById('mongoDesc').textContent = 'Not connected - check MONGODB_URI';
-        }
-
-        /**
-         * Update Facebook status
-         */
-        if (data.hasFacebookConfig) {
-          setIndicator('facebookIndicator', 'ok');
-          document.getElementById('facebookDesc').textContent = 'Configuration saved';
-        } else {
-          setIndicator('facebookIndicator', 'error');
-          document.getElementById('facebookDesc').textContent = 'Missing - configure in Admin Panel';
         }
 
         /**
@@ -379,7 +357,6 @@
         
         // Set all indicators to error state
         setIndicator('mongoIndicator', 'error');
-        setIndicator('facebookIndicator', 'error');
         setIndicator('spotifyIndicator', 'error');
       }
     }

@@ -6,7 +6,6 @@
  * 
  * Use this to quickly check if:
  * - MongoDB is connected
- * - Facebook config exists
  * - Spotify config exists
  * - When the next cron job will run
  */
@@ -66,18 +65,6 @@ function getNextCronDescription() {
 }
 
 /**
- * Check if a config object has all required Facebook fields.
- * Does NOT check if the values are valid, just if they exist.
- * 
- * @param {Object} vars - Config vars object from MongoDB
- * @returns {boolean} True if FB config looks complete
- */
-function hasFacebookConfig(vars) {
-  if (!vars) return false;
-  return !!(vars.GROUP_ID && vars.FB_TOKEN);
-}
-
-/**
  * Check if a config object has all required Spotify fields.
  * Does NOT check if the values are valid, just if they exist.
  * 
@@ -115,7 +102,6 @@ module.exports = async function handler(req, res) {
   const status = {
     timestamp: new Date().toISOString(),
     hasMongoConnection: false,
-    hasFacebookConfig: false,
     hasSpotifyConfig: false,
     nextCronRunDescription: getNextCronDescription(),
     lastRunSummary: null
@@ -137,7 +123,6 @@ module.exports = async function handler(req, res) {
     const config = await getConfig('default');
     
     if (config && config.vars) {
-      status.hasFacebookConfig = hasFacebookConfig(config.vars);
       status.hasSpotifyConfig = hasSpotifyConfig(config.vars);
       
       /**
@@ -154,7 +139,6 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    console.log('[Status] Facebook config:', status.hasFacebookConfig ? 'OK' : 'Missing');
     console.log('[Status] Spotify config:', status.hasSpotifyConfig ? 'OK' : 'Missing');
 
   } catch (error) {

@@ -9,12 +9,7 @@
 const { saveConfig } = require('../lib/mongodb');
 
 /**
- * Facebook config keys.
- */
-const FACEBOOK_KEYS = ['FB_TOKEN', 'GROUP_ID'];
-
-/**
- * Spotify config keys.
+ * Spotify config keys (Facebook deprecated - Groups API no longer works).
  */
 const SPOTIFY_KEYS = [
   'SPOTIFY_CLIENT_ID',
@@ -86,19 +81,9 @@ module.exports = async function handler(req, res) {
     }
 
     /**
-     * Determine which section to save based on 'section' field.
-     * Supports: 'facebook', 'spotify', or 'all' (default for backwards compat).
+     * Only Spotify config is supported now (Facebook Groups API deprecated).
      */
-    const section = data.section || 'all';
-    let keysToValidate = [];
-    
-    if (section === 'facebook') {
-      keysToValidate = FACEBOOK_KEYS;
-    } else if (section === 'spotify') {
-      keysToValidate = SPOTIFY_KEYS;
-    } else {
-      keysToValidate = [...FACEBOOK_KEYS, ...SPOTIFY_KEYS];
-    }
+    const keysToValidate = SPOTIFY_KEYS;
 
     /**
      * Validate the relevant section fields are present.
@@ -134,8 +119,6 @@ module.exports = async function handler(req, res) {
      * Log masked tokens for debugging (never log full tokens!).
      */
     console.log('[SaveConfig] Saving config with tokens:', {
-      FB_TOKEN: maskToken(vars.FB_TOKEN),
-      GROUP_ID: vars.GROUP_ID,
       SPOTIFY_CLIENT_ID: maskToken(vars.SPOTIFY_CLIENT_ID),
       SPOTIFY_CLIENT_SECRET: maskToken(vars.SPOTIFY_CLIENT_SECRET),
       SPOTIFY_USER_ID: vars.SPOTIFY_USER_ID,
