@@ -15,6 +15,7 @@ const {
   validateConfig: validateSpotifyConfig
 } = require('../lib/spotify');
 const { extractMusicFromPost } = require('../lib/music-detector');
+const { getActiveConfig } = require('../lib/mongodb');
 
 /**
  * Delay between processing posts to avoid API rate limits.
@@ -31,29 +32,19 @@ function sleep(ms) {
 }
 
 /**
- * Load and validate all configuration from environment variables.
- * Fails fast with clear error messages for missing config.
+ * Load and validate all configuration from MongoDB.
+ * Retrieves saved config and validates required fields.
  * 
- * @returns {{ facebook: Object, spotify: Object }} Validated config objects
- * @throws {Error} If required env vars are missing
+ * @returns {Promise<{ facebook: Object, spotify: Object }>} Validated config objects
+ * @throws {Error} If no config saved or required fields missing
  */
-function loadConfig() {
-  const facebook = {
-    groupId: process.env.GROUP_ID,
-    accessToken: process.env.FB_TOKEN
-  };
+async function loadConfig() {
+  const config = await getActiveConfig();
   
-  const spotify = {
-    clientId: process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: process.env.SPOTIFY_CLIENT_SECRET,
-    refreshToken: process.env.SPOTIFY_REFRESH_TOKEN,
-    userId: process.env.SPOTIFY_USER_ID
-  };
+  validateFbConfig(config.facebook.groupId, config.facebook.accessToken);
+  validateSpotifyConfig(config.spotify);
   
-  validateFbConfig(facebook.groupId, facebook.accessToken);
-  validateSpotifyConfig(spotify);
-  
-  return { facebook, spotify };
+  return config;
 }
 
 /**
@@ -124,10 +115,10 @@ module.exports = async function handler(req, res) {
   console.log('='.repeat(60));
   
   try {
-    /** Step 1: Load and validate configuration */
-    console.log('\n[Step 1] Loading configuration...');
-    const config = loadConfig();
-    console.log('[Config] All environment variables validated');
+    /** Step 1: Load and validate configuration from MongoDB */
+    console.log('\n[Step 1] Loading configuration from database...');
+    const config = await loadConfig();
+    console.log('[Config] Configuration loaded and validated');
     
     /** Step 2: Calculate previous month boundaries */
     console.log('\n[Step 2] Calculating date range...');

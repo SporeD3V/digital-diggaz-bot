@@ -64,17 +64,26 @@ digital-diggaz-bot/
 
 ## Environment Variables
 
+Only these environment variables are required in Vercel. API credentials (Facebook, Spotify) are stored in MongoDB via the admin panel.
+
 | Variable | Description |
 |----------|-------------|
+| `MONGODB_URI` | MongoDB Atlas connection string (auto-set via Vercel integration) |
+| `ADMIN_PASSWORD` | Password for admin panel login at `/admin` |
+| `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
+
+### API Credentials (stored in MongoDB)
+
+These are configured via the admin panel at `/admin` and stored securely in MongoDB:
+
+| Credential | Description |
+|------------|-------------|
 | `GROUP_ID` | Facebook group ID (from group URL) |
 | `FB_TOKEN` | Long-lived Facebook User Access Token |
 | `SPOTIFY_CLIENT_ID` | Spotify app client ID |
 | `SPOTIFY_CLIENT_SECRET` | Spotify app client secret |
 | `SPOTIFY_USER_ID` | Your Spotify username |
 | `SPOTIFY_REFRESH_TOKEN` | OAuth refresh token with `playlist-modify-private` scope |
-| `MONGODB_URI` | MongoDB Atlas connection string (auto-set via Vercel integration) |
-| `ADMIN_PASSWORD` | Password for admin panel login at `/admin` |
-| `ADMIN_SECRET` | (Optional) Secret for viewing full config via `/api/admin` |
 
 ## Setup Guide
 
@@ -155,20 +164,17 @@ vercel env add MONGODB_URI
 For local development:
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your values
+# Edit .env.local with MONGODB_URI and ADMIN_PASSWORD
 ```
 
 For Vercel deployment:
 ```bash
-vercel env add GROUP_ID
-vercel env add FB_TOKEN
-vercel env add SPOTIFY_CLIENT_ID
-vercel env add SPOTIFY_CLIENT_SECRET
-vercel env add SPOTIFY_USER_ID
-vercel env add SPOTIFY_REFRESH_TOKEN
-vercel env add ADMIN_PASSWORD  # Required: for /admin panel login
-vercel env add ADMIN_SECRET  # Optional: for /api/admin access
+vercel env add MONGODB_URI       # From MongoDB Atlas (or use Vercel integration)
+vercel env add ADMIN_PASSWORD    # Required: for /admin panel login
+vercel env add ADMIN_SECRET      # Optional: for /api/admin access
 ```
+
+> **Note:** Facebook and Spotify credentials are configured via the admin panel at `/admin` after deployment, not as environment variables.
 
 ### 6. Deploy to Vercel
 
