@@ -215,6 +215,17 @@ curl -H "Authorization: Bearer YOUR_ADMIN_SECRET" \
   "https://your-project.vercel.app/api/admin?projectId=default&showSecrets=true"
 ```
 
+### Status Page
+
+Check system health at `/status` - shows green/red indicators for each component:
+
+- **MongoDB**: Database connection status
+- **Facebook**: Configuration saved status  
+- **Spotify**: Configuration saved status
+- **Next Run**: When the cron job will execute
+
+API endpoint: `GET /api/status` returns JSON with `hasMongoConnection`, `hasFacebookConfig`, `hasSpotifyConfig`, `nextCronRunDescription`.
+
 ### Automatic (Cron)
 
 The bot automatically runs on the 1st of each month at 00:00 UTC. Check Vercel dashboard logs for execution details.
