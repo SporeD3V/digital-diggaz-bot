@@ -9,12 +9,14 @@
 const { saveConfig } = require('../lib/mongodb');
 
 /**
- * List of required environment variable keys.
- * Used for validation before saving to database.
+ * Facebook config keys.
  */
-const REQUIRED_KEYS = [
-  'FB_TOKEN',
-  'GROUP_ID',
+const FACEBOOK_KEYS = ['FB_TOKEN', 'GROUP_ID'];
+
+/**
+ * Spotify config keys.
+ */
+const SPOTIFY_KEYS = [
   'SPOTIFY_CLIENT_ID',
   'SPOTIFY_CLIENT_SECRET',
   'SPOTIFY_USER_ID',
@@ -22,13 +24,14 @@ const REQUIRED_KEYS = [
 ];
 
 /**
- * Validate that all required keys are present and non-empty.
+ * Validate a section (Facebook or Spotify) has all required fields.
  * 
  * @param {Object} data - Form data to validate
+ * @param {string[]} keys - Keys to check
  * @returns {{ valid: boolean, missing: string[] }} Validation result
  */
-function validateInput(data) {
-  const missing = REQUIRED_KEYS.filter(key => !data[key] || data[key].trim() === '');
+function validateSection(data, keys) {
+  const missing = keys.filter(key => !data[key] || data[key].trim() === '');
   return {
     valid: missing.length === 0,
     missing
@@ -83,10 +86,24 @@ module.exports = async function handler(req, res) {
     }
 
     /**
-     * Validate all required fields are present.
-     * Return specific error message listing missing fields.
+     * Determine which section to save based on 'section' field.
+     * Supports: 'facebook', 'spotify', or 'all' (default for backwards compat).
      */
-    const validation = validateInput(data);
+    const section = data.section || 'all';
+    let keysToValidate = [];
+    
+    if (section === 'facebook') {
+      keysToValidate = FACEBOOK_KEYS;
+    } else if (section === 'spotify') {
+      keysToValidate = SPOTIFY_KEYS;
+    } else {
+      keysToValidate = [...FACEBOOK_KEYS, ...SPOTIFY_KEYS];
+    }
+
+    /**
+     * Validate the relevant section fields are present.
+     */
+    const validation = validateSection(data, keysToValidate);
     
     if (!validation.valid) {
       console.log('[SaveConfig] Validation failed, missing:', validation.missing);
@@ -97,17 +114,21 @@ module.exports = async function handler(req, res) {
     }
 
     /**
-     * Extract and trim all values.
-     * Prevents whitespace issues from copy-paste.
+     * Build vars object with only the fields being saved.
+     * Merge with existing config to preserve other section.
      */
-    const vars = {
-      FB_TOKEN: data.FB_TOKEN.trim(),
-      GROUP_ID: data.GROUP_ID.trim(),
-      SPOTIFY_CLIENT_ID: data.SPOTIFY_CLIENT_ID.trim(),
-      SPOTIFY_CLIENT_SECRET: data.SPOTIFY_CLIENT_SECRET.trim(),
-      SPOTIFY_USER_ID: data.SPOTIFY_USER_ID.trim(),
-      SPOTIFY_REFRESH_TOKEN: data.SPOTIFY_REFRESH_TOKEN.trim()
-    };
+    const { getConfig } = require('../lib/mongodb');
+    const existingConfig = await getConfig('default');
+    const existingVars = existingConfig?.vars || {};
+    
+    const vars = { ...existingVars };
+    
+    // Update only the fields provided
+    keysToValidate.forEach(key => {
+      if (data[key]) {
+        vars[key] = data[key].trim();
+      }
+    });
 
     /**
      * Log masked tokens for debugging (never log full tokens!).

@@ -10,8 +10,10 @@ Automated monthly Spotify playlist generator for the Digital Diggaz Facebook gro
 - **Deduplication**: Prevents duplicate tracks in playlists
 - **Private Playlists**: Creates private playlists for manual review before sharing
 - **Manual Trigger**: Can be triggered anytime via API endpoint
-- **Admin Panel**: React + TypeScript admin UI at `/admin` with password authentication
-- **API Connection Testing**: Test Facebook and Spotify credentials before saving
+- **Admin Dashboard**: React + TypeScript dashboard at `/admin` combining system status and configuration
+- **System Status**: Real-time indicators for MongoDB, Facebook, and Spotify connection status
+- **Separate Config Saves**: Save Facebook and Spotify credentials independently
+- **API Connection Testing**: Test credentials before saving
 - **Remember Me**: Optional persistent login for admin panel
 - **MongoDB Storage**: Securely store configuration in MongoDB Atlas
 
@@ -23,7 +25,7 @@ digital-diggaz-bot/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── Login.tsx         # Login form with Remember Me
-│   │   │   ├── ConfigForm.tsx    # API configuration form
+│   │   │   ├── ConfigForm.tsx    # Dashboard with status + config forms
 │   │   │   └── styles.css        # Component styles
 │   │   ├── App.tsx               # Main app with auth logic
 │   │   ├── types.ts              # TypeScript interfaces
@@ -188,18 +190,19 @@ The build process automatically compiles the React admin panel to `public/admin/
 
 ## Usage
 
-### Admin Panel
+### Admin Dashboard
 
-The admin panel is a React + TypeScript application with password authentication.
+The admin dashboard combines system status and API configuration in one screen.
 
 > **Note:** The root URL (`/`) automatically redirects to `/admin`.
 
 1. Open `https://your-project.vercel.app/admin`
 2. Enter your `ADMIN_PASSWORD` to login
-3. (Optional) Check "Remember me" to stay logged in
-4. Fill in Facebook and Spotify credentials
-5. Click **Test** buttons to verify API connections
-6. Click **Save Configuration** to store in MongoDB
+3. View **System Status** - green/red indicators for MongoDB, Facebook, Spotify
+4. Configure **Facebook** - enter Group ID and Token, click **Test**, then **Save Facebook Config**
+5. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
+
+Each section can be saved independently, allowing you to set up one service at a time.
 
 ### Admin API
 
