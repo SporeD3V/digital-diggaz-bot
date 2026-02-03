@@ -1,11 +1,13 @@
 /**
  * @fileoverview Main API route for generating monthly Spotify playlists.
  * Triggered by Vercel cron on 1st of each month, or manually via GET request.
- * Scans Facebook group posts and creates a curated playlist of new releases.
+ * Processes manually submitted music links and creates a curated playlist.
+ * 
+ * NOTE: Facebook Groups API was deprecated. Links are now submitted manually
+ * via the admin panel and stored in MongoDB.
  */
 
 const { getPreviousMonthBounds } = require('../lib/date-utils');
-const { fetchGroupPosts, validateConfig: validateFbConfig } = require('../lib/facebook');
 const {
   getAccessToken,
   searchTrack,
@@ -14,8 +16,8 @@ const {
   addTracksToPlaylist,
   validateConfig: validateSpotifyConfig
 } = require('../lib/spotify');
-const { extractMusicFromPost } = require('../lib/music-detector');
-const { getActiveConfig } = require('../lib/mongodb');
+const { extractMusicUrls } = require('../lib/music-detector');
+const { getActiveConfig, connectToDatabase } = require('../lib/mongodb');
 
 /**
  * Delay between processing posts to avoid API rate limits.
@@ -32,26 +34,35 @@ function sleep(ms) {
 }
 
 /**
- * Load and validate all configuration from MongoDB.
- * Retrieves saved config and validates required fields.
+ * Load and validate Spotify configuration from MongoDB.
  * 
- * @returns {Promise<{ facebook: Object, spotify: Object }>} Validated config objects
+ * @returns {Promise<{ spotify: Object }>} Validated config object
  * @throws {Error} If no config saved or required fields missing
  */
 async function loadConfig() {
   const config = await getActiveConfig();
-  
-  validateFbConfig(config.facebook.groupId, config.facebook.accessToken);
   validateSpotifyConfig(config.spotify);
-  
   return config;
 }
 
 /**
- * Process a single music candidate and search for matching Spotify track.
- * Handles both direct Spotify URLs and text-based searches.
+ * Fetch submitted links for a specific month from MongoDB.
  * 
- * @param {Object} candidate - Music candidate from extractMusicFromPost
+ * @param {string} month - Month in "YYYY-MM" format
+ * @returns {Promise<string[]>} Array of submitted URLs
+ */
+async function getSubmittedLinks(month) {
+  const db = await connectToDatabase();
+  const collection = db.collection('submitted_links');
+  const doc = await collection.findOne({ month });
+  return doc?.links || [];
+}
+
+/**
+ * Process a single music URL and search for matching Spotify track.
+ * Handles both direct Spotify URLs and other platform URLs.
+ * 
+ * @param {Object} candidate - Music candidate from extractMusicUrls
  * @param {string} targetYearMonth - Target month in "YYYY-MM" format
  * @param {string} spotifyToken - Spotify access token
  * @returns {Promise<Object|null>} Track info or null if no match
@@ -102,7 +113,7 @@ module.exports = async function handler(req, res) {
    * Updated throughout the process for final reporting.
    */
   const stats = {
-    postsScanned: 0,
+    linksSubmitted: 0,
     musicCandidates: 0,
     tracksMatched: 0,
     tracksAdded: 0,
@@ -131,43 +142,39 @@ module.exports = async function handler(req, res) {
     console.log('\n[Step 3] Authenticating with Spotify...');
     const spotifyToken = await getAccessToken(config.spotify);
     
-    /** Step 4: Fetch Facebook group posts */
-    console.log('\n[Step 4] Fetching Facebook group posts...');
-    const posts = await fetchGroupPosts({
-      groupId: config.facebook.groupId,
-      accessToken: config.facebook.accessToken,
-      startDate: monthInfo.startDate,
-      endDate: monthInfo.endDate
-    });
-    stats.postsScanned = posts.length;
+    /** Step 4: Fetch submitted links from MongoDB */
+    console.log('\n[Step 4] Fetching submitted links...');
+    const links = await getSubmittedLinks(monthInfo.yearMonth);
+    stats.linksSubmitted = links.length;
+    console.log(`[Links] Found ${links.length} submitted links for ${monthInfo.yearMonth}`);
     
-    if (posts.length === 0) {
-      console.log('[Warning] No posts found in date range');
+    if (links.length === 0) {
+      console.log('[Warning] No links submitted for this month');
       return res.status(200).json({
         success: true,
-        message: 'No posts found in the target month',
+        message: `No links submitted for ${monthInfo.monthName} ${monthInfo.year}. Submit links via the admin panel.`,
         stats,
         duration: Date.now() - startTime
       });
     }
     
-    /** Step 5: Extract music from posts */
-    console.log('\n[Step 5] Extracting music from posts...');
+    /** Step 5: Extract music info from URLs */
+    console.log('\n[Step 5] Processing music URLs...');
     const allCandidates = [];
     
-    for (const post of posts) {
-      const candidates = extractMusicFromPost(post);
-      allCandidates.push(...candidates.map(c => ({ ...c, postId: post.id })));
+    for (const url of links) {
+      const candidates = extractMusicUrls(url);
+      allCandidates.push(...candidates);
     }
     
     stats.musicCandidates = allCandidates.length;
-    console.log(`[Extract] Found ${allCandidates.length} music candidates from ${posts.length} posts`);
+    console.log(`[Extract] Found ${allCandidates.length} music candidates from ${links.length} links`);
     
     if (allCandidates.length === 0) {
-      console.log('[Warning] No music found in posts');
+      console.log('[Warning] No recognizable music URLs found');
       return res.status(200).json({
         success: true,
-        message: 'No music links found in posts',
+        message: 'No recognizable music URLs found in submitted links',
         stats,
         duration: Date.now() - startTime
       });
@@ -238,7 +245,7 @@ module.exports = async function handler(req, res) {
     console.log('[Complete] Playlist generation finished');
     console.log('='.repeat(60));
     console.log(`Playlist: ${playlist.url}`);
-    console.log(`Posts scanned: ${stats.postsScanned}`);
+    console.log(`Links submitted: ${stats.linksSubmitted}`);
     console.log(`Music candidates: ${stats.musicCandidates}`);
     console.log(`Tracks matched: ${stats.tracksMatched}`);
     console.log(`Tracks added: ${stats.tracksAdded}`);

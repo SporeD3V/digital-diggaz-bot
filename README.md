@@ -13,6 +13,7 @@ Automated monthly Spotify playlist generator for the Digital Diggaz community. P
 - **Private Playlists**: Creates private playlists for manual review before sharing
 - **Manual Trigger**: Can be triggered anytime via API endpoint
 - **Admin Dashboard**: React + TypeScript dashboard at `/admin` combining system status and configuration
+- **Manual Link Submission**: Paste music links via admin panel (replaces deprecated Facebook API)
 - **System Status**: Real-time indicators for MongoDB and Spotify connection status
 - **API Connection Testing**: Test Spotify credentials before saving
 - **Remember Me**: Optional persistent login for admin panel
@@ -41,6 +42,8 @@ digital-diggaz-bot/
 │   │   ├── facebook.js           # DEPRECATED - Returns deprecation notice
 │   │   └── spotify.js            # Test Spotify API connection
 │   ├── generate-playlist.js      # Main playlist generation
+│   ├── submit-links.js           # Submit music links for processing
+│   ├── get-links.js              # Retrieve submitted links
 │   ├── save-config.js            # Save configuration to MongoDB
 │   └── admin.js                  # View stored configurations
 ├── lib/
@@ -185,7 +188,19 @@ The admin dashboard combines system status and API configuration in one screen.
 1. Open `https://your-project.vercel.app/admin`
 2. Enter your `ADMIN_PASSWORD` to login
 3. View **System Status** - green/red indicators for MongoDB and Spotify
-4. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
+4. **Submit Music Links** - paste links from YouTube, SoundCloud, Spotify, etc. (one per line)
+5. Configure **Spotify** - enter all credentials, click **Test**, then **Save Spotify Config**
+
+### Submitting Music Links
+
+Since the Facebook Groups API is deprecated, music links must be submitted manually:
+
+1. Go to the admin dashboard at `/admin`
+2. In the **Submit Music Links** section, paste music URLs
+3. Supports: YouTube, SoundCloud, Spotify, Bandcamp, Apple Music, Tidal, Deezer
+4. Links can be one per line, comma-separated, or space-separated
+5. Click **Submit Links** - duplicates are automatically skipped
+6. Links are stored by month and processed when the playlist is generated
 
 ### Admin API
 
